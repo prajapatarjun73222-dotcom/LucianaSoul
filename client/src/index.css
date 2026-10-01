@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-cream font-sans text-ink antialiased;
+    font-weight: 400;
+    overflow-x: hidden;
+  }
+  ::selection {
+    @apply bg-stone text-ink;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-serif font-light;
+    letter-spacing: 0.01em;
+  }
+  img {
+    @apply select-none;
+  }
+  :focus-visible {
+    outline: 1px solid theme('colors.deep');
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .container-editorial {
+    @apply mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12;
+  }
+  .label {
+    @apply font-sans text-[11px] font-medium uppercase tracking-label text-deep;
+  }
+  .display {
+    @apply font-serif font-light uppercase leading-[0.95] tracking-[0.02em];
+  }
+  /* Sized to the viewport so the longest word ("SOMETHING", "LUCIANASOUL") never overflows its column. */
+  .display-hero {
+    @apply display text-[11.5vw] sm:text-[9vw] lg:text-[4.9vw] 2xl:text-[76px];
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-3 border text-center sm:whitespace-nowrap px-7 py-4 text-[11px] font-medium uppercase tracking-label transition-colors duration-500;
+  }
+  .btn-primary {
+    @apply btn border-ink bg-ink text-cream hover:bg-deep hover:border-deep;
+  }
+  .btn-outline {
+    @apply btn border-ink/70 text-ink hover:bg-ink hover:text-cream;
+  }
+  .btn-light {
+    @apply btn border-cream/80 text-cream hover:bg-cream hover:text-ink;
+  }
+  .link-underline {
+    @apply relative inline-block;
+  }
+  .link-underline::after {
+    content: '';
+    @apply absolute -bottom-0.5 left-0 h-px w-full origin-right scale-x-0 bg-current transition-transform duration-500 ease-out;
+  }
+  .link-underline:hover::after,
+  .link-underline[aria-current='page']::after {
+    @apply origin-left scale-x-100;
+  }
+  .field {
+    @apply w-full border-0 border-b border-taupe/60 bg-transparent px-0 py-3 text-[15px] text-ink placeholder:text-taupe focus:border-ink focus:outline-none focus:ring-0;
+  }
+  .field-label {
+    @apply label mb-1 block text-[10px] text-deep/80;
+  }
+  .prose-editorial {
+    @apply text-[16px] leading-[1.85] text-deep;
+  }
+  .prose-editorial p {
+    @apply mb-5;
+  }
+  .prose-editorial h2 {
+    @apply mb-4 mt-10 text-3xl text-ink;
+  }
+  .prose-editorial h3 {
+    @apply mb-3 mt-8 text-2xl text-ink;
+  }
+  .prose-editorial a {
+    @apply underline decoration-taupe underline-offset-4;
+  }
+  .prose-editorial ul {
+    @apply mb-5 list-disc pl-5;
+  }
+  .prose-editorial blockquote {
+    @apply my-8 border-l border-taupe pl-6 font-serif text-2xl italic text-ink;
+  }
+  .prose-editorial img {
+    @apply my-8 w-full;
+  }
+  .skeleton {
+    @apply relative overflow-hidden bg-sand;
+  }
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full;
+    background: linear-gradient(90deg, transparent, rgba(251, 241, 231, 0.7), transparent);
+    animation: shimmer 1.8s infinite;
+  }
+  .zoom-hover img {
+    @apply transition-transform duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)];
+  }
+  .zoom-hover:hover img {
+    @apply scale-[1.04];
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

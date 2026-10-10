@@ -17,6 +17,11 @@ export const config = {
     url: (process.env.KEEP_ALIVE_URL ?? process.env.RENDER_EXTERNAL_URL ?? '').replace(/\/$/, ''),
     intervalMinutes: Number(process.env.KEEP_ALIVE_INTERVAL_MINUTES ?? 10),
   },
+  protection: {
+    // Cloudflare Turnstile is only enforced when a secret key is set.
+    turnstileSecret: process.env.TURNSTILE_SECRET_KEY ?? '',
+    emailDailyLimit: Number(process.env.EMAIL_DAILY_LIMIT ?? 60),
+  },
   admin: {
     email: process.env.ADMIN_EMAIL,
     password: process.env.ADMIN_PASSWORD,

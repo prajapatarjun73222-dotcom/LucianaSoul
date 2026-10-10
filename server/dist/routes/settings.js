@@ -99,8 +99,11 @@ adminSettings.get('/', asyncHandler(async (_req, res) => {
     });
 }));
 async function updateSettings(req, res) {
+    const body = req.body;
+    if (req.admin?.role !== 'developer' && body.smtp)
+        delete body.smtp.notifyEnquiries;
     const settings = await getSettings();
-    applySettings(settings, req.body);
+    applySettings(settings, body);
     await settings.save();
     res.json({ ok: true });
 }

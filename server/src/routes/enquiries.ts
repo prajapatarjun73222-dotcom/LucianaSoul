@@ -8,11 +8,12 @@ import { getSettings } from '../models/Settings.js';
 import { requireAuth } from '../middleware/auth.js';
 import { asyncHandler, validateBody } from '../middleware/validate.js';
 import { enquiryEmail, sendMail } from '../services/mailer.js';
+import { checkSubmission } from '../services/spamGuard.js';
 
 export const publicEnquiries = Router();
 export const adminEnquiries = Router();
 
-const enquiryLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 15, standardHeaders: true, legacyHeaders: false });
+const enquiryLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: 7, standardHeaders: true, legacyHeaders: false });
 
 const enquirySchema = z.object({
   type: z.enum(ENQUIRY_TYPES).default('general'),
@@ -29,6 +30,8 @@ const enquirySchema = z.object({
     .refine((v) => Types.ObjectId.isValid(v))
     .optional(),
   website: z.string().optional(), // honeypot
+  startedAt: z.number().optional(),
+  turnstileToken: z.string().max(4096).optional(),
 });
 
 publicEnquiries.post(
@@ -36,10 +39,21 @@ publicEnquiries.post(
   enquiryLimiter,
   validateBody(enquirySchema),
   asyncHandler(async (req, res) => {
-    const { website, ...body } = req.body as z.infer<typeof enquirySchema>;
-    if (website) return res.status(201).json({ ok: true });
+    const { website, startedAt, turnstileToken, ...body } = req.body as z.infer<typeof enquirySchema>;
     if (!body.message && !body.designIdea) {
       return res.status(400).json({ error: 'Please tell us a little about your enquiry.' });
+    }
+    const verdict = await checkSubmission({
+      website,
+      startedAt,
+      turnstileToken,
+      email: body.email,
+      text: [body.message, body.designIdea, body.measurements].join('\n'),
+      ip: req.ip,
+    });
+    if (!verdict.ok) {
+      if (verdict.silent) return res.status(201).json({ ok: true });
+      return res.status(400).json({ error: verdict.error });
     }
 
     let productName = '';
@@ -49,14 +63,18 @@ publicEnquiries.post(
     }
     const enquiry = await Enquiry.create({ ...body, productName });
 
+    // The developer always gets a copy; the owner only while her switch is on. Sent separately so neither sees the other's address.
     const settings = await getSettings();
-    if (settings.smtp?.notifyEnquiries !== false) {
+    const developerEmail = settings.developer?.email || settings.smtp?.user || '';
+    const ownerEmail = settings.smtp?.notifyEnquiries !== false ? settings.smtp?.notifyTo || settings.contact?.email || '' : '';
+    const recipients = [...new Set([developerEmail, ownerEmail].filter(Boolean).map((e) => e.toLowerCase()))];
+    const mail = enquiryEmail(enquiry.toObject());
+    for (const to of recipients) {
       try {
-        const mail = enquiryEmail(enquiry.toObject());
-        const result = await sendMail({ ...mail, replyTo: enquiry.email });
+        const result = await sendMail({ ...mail, to, replyTo: enquiry.email });
         if (result.sent) await Enquiry.updateOne({ _id: enquiry._id }, { emailNotified: true });
       } catch (err) {
-        console.error('[mail] enquiry notification failed:', (err as Error).message);
+        console.error(`[mail] enquiry notification to ${to} failed:`, (err as Error).message);
       }
     }
 

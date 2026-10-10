@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { getSettings } from '../models/Settings.js';
+import { takeEmailQuota } from './spamGuard.js';
 
 type Smtp = {
   host?: string | null;
@@ -30,6 +31,10 @@ export async function sendMail(opts: { subject: string; text: string; html?: str
   if (!isSmtpConfigured(smtp)) {
     console.log('[mail] SMTP not configured in admin settings; skipping email');
     return { sent: false, reason: 'not_configured' as const };
+  }
+  if (!takeEmailQuota()) {
+    console.warn('[mail] daily email limit reached; skipping email (submissions are still saved)');
+    return { sent: false, reason: 'daily_limit' as const };
   }
   await transportFor(smtp).sendMail({
     from: smtp.from || `LucianaSoul Website <${smtp.user}>`,

@@ -111,9 +111,11 @@ adminSettings.get(
   }),
 );
 
-async function updateSettings(req: { body: z.infer<typeof settingsSchema> }, res: import('express').Response) {
+async function updateSettings(req: import('express').Request, res: import('express').Response) {
+  const body = req.body as z.infer<typeof settingsSchema>;
+  if (req.admin?.role !== 'developer' && body.smtp) delete body.smtp.notifyEnquiries;
   const settings = await getSettings();
-  applySettings(settings, req.body);
+  applySettings(settings, body);
   await settings.save();
   res.json({ ok: true });
 }

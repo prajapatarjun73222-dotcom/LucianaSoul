@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import { ENQUIRY_TYPE_LABELS } from '../lib/labels';
 import type { EnquiryType } from '../types';
 import WhatsAppButton from './WhatsAppButton';
+import HumanCheck, { humanCheckEnabled } from './HumanCheck';
 import { waMessages } from '../lib/whatsapp';
 
 interface Props {
@@ -18,12 +19,20 @@ type State = 'idle' | 'sending' | 'sent' | 'error';
 export default function EnquiryForm({ variant = 'contact', defaultType = 'general', productId, productName, submitLabel }: Props) {
   const [state, setState] = useState<State>('idle');
   const [error, setError] = useState('');
+  const [startedAt] = useState(() => Date.now());
+  const [humanToken, setHumanToken] = useState('');
+  const [checkKey, setCheckKey] = useState(0);
   const bespoke = variant === 'bespoke';
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const get = (k: string) => String(form.get(k) ?? '').trim();
+    if (humanCheckEnabled && !humanToken) {
+      setError('Please complete the quick human check above the button.');
+      setState('error');
+      return;
+    }
     setState('sending');
     setError('');
     try {
@@ -42,12 +51,16 @@ export default function EnquiryForm({ variant = 'contact', defaultType = 'genera
           referenceImageUrl: get('referenceImageUrl'),
           productId,
           website: get('website'),
+          startedAt,
+          turnstileToken: humanToken || undefined,
         },
       });
       setState('sent');
     } catch (err) {
       setError((err as Error).message);
       setState('error');
+      setHumanToken('');
+      setCheckKey((k) => k + 1);
     }
   }
 
@@ -137,6 +150,8 @@ export default function EnquiryForm({ variant = 'contact', defaultType = 'genera
           defaultValue={productName ? `I'm interested in ${/^the\s/i.test(productName) ? productName : `the ${productName}`}.` : ''}
         />
       </label>
+
+      <HumanCheck key={checkKey} onToken={setHumanToken} className="sm:col-span-2" />
 
       {state === 'error' && (
         <p className="text-sm text-[#8a4b3c] sm:col-span-2" role="alert">

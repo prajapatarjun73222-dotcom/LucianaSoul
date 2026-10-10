@@ -35,7 +35,7 @@ const settingsSchema = new Schema({
         phone: { type: String, default: '+44 7454 720895' },
         whatsapp: { type: String, default: '447454720895' },
         email: { type: String, default: 'pulciniluciana@gmail.com' },
-        addressLines: { type: [String], default: ['210/212 Southwark Park Road', 'London', 'SE16 3RX'] },
+        addressLines: { type: [String], default: ['Finchley Road', 'North London', 'NW2'] },
         instagram: { type: String, default: 'luciana_soul' },
         googleMapsUrl: { type: String, default: '' },
     },

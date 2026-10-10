@@ -1,6 +1,7 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -22,9 +23,22 @@ const app = express();
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(cors({ origin: config.clientOrigin.split(',').map((o) => o.trim()) }));
-app.use(express.json({ limit: '1mb' }));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+app.use(
+  '/api',
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests. Please wait a few minutes and try again.' },
+  }),
+);
+// Public forms only need a few KB; this must run before the general parser so it takes effect.
+app.use(['/api/enquiries', '/api/developer-leads'], express.json({ limit: '20kb' }));
+app.use(express.json({ limit: '1mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/admin/users', adminUserRoutes);
 app.use('/api/media', mediaRoutes);
@@ -47,7 +61,9 @@ if (fs.existsSync(clientDist)) {
   app.get('*', (_req, res) => res.sendFile(path.join(clientDist, 'index.html')));
 }
 
-app.use((err: Error & { code?: number }, _req: Request, res: Response, _next: NextFunction) => {
+app.use((err: Error & { code?: number; type?: string }, _req: Request, res: Response, _next: NextFunction) => {
+  if (err.type === 'entity.too.large') return res.status(413).json({ error: 'That message is too long' });
+  if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Invalid request' });
   if (err.code === 11000) return res.status(409).json({ error: 'A record with that value already exists' });
   if (err.name === 'CastError' || err.name === 'ValidationError') return res.status(400).json({ error: err.message });
   console.error(err);

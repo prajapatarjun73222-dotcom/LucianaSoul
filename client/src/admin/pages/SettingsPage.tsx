@@ -285,8 +285,11 @@ function SmtpTab({
   saving: boolean;
 }) {
   const toast = useToast();
+  const { user } = useAuth();
+  const isDeveloper = user?.role === 'developer';
   const [testing, setTesting] = useState(false);
   const smtp = s.smtp;
+  const developerEmail = s.developer?.email || smtp.user;
   const setSmtp = (patch: Partial<AdminSettings['smtp']>) => setS({ ...s, smtp: { ...smtp, ...patch } });
 
   async function test() {
@@ -306,18 +309,22 @@ function SmtpTab({
       <p className={`p-4 text-sm ${s.smtpConfigured ? 'bg-sand text-deep' : 'border border-taupe/50 text-deep'}`}>
         {!s.smtpConfigured
           ? 'Email is not set up. Enquiries are still saved in Admin, Enquiries. Fill in host, username and password to turn emails on.'
-          : smtp.notifyEnquiries
-            ? `Email is set up. Every new enquiry is emailed to Luciana at ${smtp.notifyTo || 'her contact email'}.`
-            : 'Email is set up, but new-enquiry emails are switched OFF. Enquiries are still saved in Admin, Enquiries.'}
+          : isDeveloper
+            ? `Email is set up. Every new enquiry is emailed to you (${developerEmail || 'developer email'})${
+                smtp.notifyEnquiries ? ` and to Luciana (${smtp.notifyTo || 'her contact email'}).` : '. Emails to Luciana are OFF.'
+              }`
+            : 'Email is set up. New enquiries are saved in Admin, Enquiries.'}
       </p>
-      <Toggle
-        checked={smtp.notifyEnquiries}
-        onChange={(notifyEnquiries) => {
-          setSmtp({ notifyEnquiries });
-          save({ smtp: { notifyEnquiries } as AdminSettings['smtp'] });
-        }}
-        label="Email Luciana when a new enquiry arrives"
-      />
+      {isDeveloper && (
+        <Toggle
+          checked={smtp.notifyEnquiries}
+          onChange={(notifyEnquiries) => {
+            setSmtp({ notifyEnquiries });
+            save({ smtp: { notifyEnquiries } as AdminSettings['smtp'] });
+          }}
+          label="Also email Luciana when a new enquiry arrives (only you can change this)"
+        />
+      )}
       <div className="grid gap-5 sm:grid-cols-3">
         <Field label="SMTP host" className="sm:col-span-2" hint="Gmail: smtp.gmail.com">
           <input className={inputCls} value={smtp.host} onChange={(e) => setSmtp({ host: e.target.value })} />
@@ -337,7 +344,7 @@ function SmtpTab({
         <Field label="From address (optional)" className="sm:col-span-2" hint='e.g. "LucianaSoul Website <you@gmail.com>"'>
           <input className={inputCls} value={smtp.from} onChange={(e) => setSmtp({ from: e.target.value })} />
         </Field>
-        <Field label="Luciana's email for new enquiries" hint="Every new enquiry is emailed here.">
+        <Field label="Luciana's email for new enquiries" hint="Used when emails to Luciana are switched on.">
           <input type="email" className={inputCls} value={smtp.notifyTo} onChange={(e) => setSmtp({ notifyTo: e.target.value })} />
         </Field>
       </div>

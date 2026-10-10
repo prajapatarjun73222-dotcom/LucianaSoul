@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import Seo from '../components/Seo';
 import Reveal from '../components/Reveal';
 import { WhatsAppIcon } from '../components/Icons';
+import HumanCheck, { humanCheckEnabled } from '../components/HumanCheck';
 import { api } from '../lib/api';
 import { DEV_SERVICE_LABELS } from '../lib/labels';
 import { useSettings } from '../lib/settings';
@@ -22,6 +23,9 @@ export default function WebDevelopment() {
   const dev = settings?.developer;
   const [state, setState] = useState<State>('idle');
   const [error, setError] = useState('');
+  const [startedAt] = useState(() => Date.now());
+  const [humanToken, setHumanToken] = useState('');
+  const [checkKey, setCheckKey] = useState(0);
 
   if (loading) return <div className="min-h-[70vh]" aria-busy="true" />;
   if (!dev?.enabled) return <NotFound />;
@@ -30,6 +34,11 @@ export default function WebDevelopment() {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const get = (k: string) => String(form.get(k) ?? '').trim();
+    if (humanCheckEnabled && !humanToken) {
+      setError('Please complete the quick human check above the button.');
+      setState('error');
+      return;
+    }
     setState('sending');
     setError('');
     try {
@@ -43,12 +52,16 @@ export default function WebDevelopment() {
           service: get('service'),
           message: get('message'),
           website: get('website'),
+          startedAt,
+          turnstileToken: humanToken || undefined,
         },
       });
       setState('sent');
     } catch (err) {
       setError((err as Error).message);
       setState('error');
+      setHumanToken('');
+      setCheckKey((k) => k + 1);
     }
   }
 
@@ -151,6 +164,7 @@ export default function WebDevelopment() {
                     placeholder="Your business, what you have now, what you would like..."
                   />
                 </label>
+                <HumanCheck key={checkKey} onToken={setHumanToken} className="sm:col-span-2" />
                 {state === 'error' && (
                   <p className="text-sm text-[#8a4b3c] sm:col-span-2" role="alert">
                     {error || 'Something went wrong. Please try again or reach me on WhatsApp.'}

@@ -10,7 +10,6 @@ import { ArrowIcon, InstagramIcon } from '../components/Icons';
 import { instagramUrl, useSettings } from '../lib/settings';
 import { useFetch } from '../lib/useFetch';
 import { waMessages } from '../lib/whatsapp';
-import { aboutPortrait } from '../lib/aboutContent';
 import { BLOG_CATEGORY_LABELS, formatDate } from '../lib/labels';
 import type { BlogPost, Media, Paged, Product } from '../types';
 
@@ -118,37 +117,6 @@ export default function Home() {
             Individual pieces, bespoke commissions and up-cycled clothing, designed in London by LucianaSoul.
           </p>
         </Reveal>
-      </section>
-
-      {/* MEET THE DESIGNER */}
-      <section className="bg-sand py-20 lg:py-28">
-        <div className="container-editorial grid items-center gap-12 lg:grid-cols-12">
-          <Reveal variant="image" className="lg:col-span-5">
-            <MediaView media={aboutPortrait(settings?.about)} ratio="4/5" sizes="(min-width: 1024px) 40vw, 100vw" />
-          </Reveal>
-          <div className="lg:col-span-6 lg:col-start-7">
-            <SectionHeading
-              label="Meet the designer"
-              title={
-                <>
-                  Luciana
-                  <br />
-                  Pulcini
-                </>
-              }
-            />
-            <Reveal delay={100}>
-              <p className="mt-8 font-serif text-2xl italic text-ink">Not just clothes. A cause.</p>
-              <p className="mt-5 max-w-md leading-relaxed text-deep">
-                An Italian-trained tailor who founded LucianaSoul in London in 2016, Luciana creates up-cycled fashion inspired by her
-                own experience of homelessness, and uses her work to support efforts to end it.
-              </p>
-              <Link to="/about" className="label link-underline mt-10 inline-flex items-center gap-3 text-ink">
-                Read her story <ArrowIcon />
-              </Link>
-            </Reveal>
-          </div>
-        </div>
       </section>
 
       {/* COLLECTION */}

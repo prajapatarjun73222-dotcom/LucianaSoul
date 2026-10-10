@@ -13,7 +13,7 @@ export default function MediaThumb({ media, ratio = '1/1' }: { media: Media; rat
     <div className="relative">
       {isDirectVideo && !poster ? (
         <div className="relative bg-sand" style={{ aspectRatio: ratio }}>
-          <video src={media.url} muted preload="metadata" referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full object-cover" />
+          <video src={media.url} muted preload="metadata" className="absolute inset-0 h-full w-full object-cover" />
         </div>
       ) : (
         <SmartImage src={poster} alt={media.alt || media.title || ''} ratio={ratio} sizes="300px" />

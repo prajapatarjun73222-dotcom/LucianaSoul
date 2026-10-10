@@ -1,8 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../../lib/api';
 import { useFetch } from '../../lib/useFetch';
-import { HOMEPAGE_SLOTS, type AdminUser, type HomepageSlot, type Media, type Milestone, type Paged } from '../../types';
-import { DEFAULT_ABOUT_TEXT, DEFAULT_MILESTONES } from '../../lib/aboutContent';
+import { HOMEPAGE_SLOTS, type AdminUser, type HomepageSlot, type Media, type Paged } from '../../types';
 import TextTabs from '../../components/TextTabs';
 import MediaPicker from '../MediaPicker';
 import MediaThumb from '../MediaThumb';
@@ -11,10 +10,7 @@ import { Field, PageHeader, Toggle, inputCls, smallBtn, dangerBtn, useToast } fr
 
 interface AdminSettings {
   homepage: Record<HomepageSlot, string[]>;
-  about: Record<'designer' | 'philosophy' | 'upcycling' | 'bespoke' | 'london', string> & {
-    designerMedia?: string | null;
-    milestones?: Milestone[];
-  };
+  about: Record<'designer' | 'philosophy' | 'upcycling' | 'bespoke' | 'london', string> & { designerMedia?: string | null };
   sustainabilityText: string;
   contact: { phone: string; whatsapp: string; email: string; addressLines: string[]; instagram: string; googleMapsUrl: string };
   seo: { title: string; description: string; ogImage: string };
@@ -144,27 +140,21 @@ export default function SettingsPage() {
       {tab === 'about' && (
         <div className="max-w-3xl space-y-5">
           <p className="bg-sand p-4 text-sm leading-relaxed text-deep">
-            Write in LucianaSoul's own words. Sections left empty show the built-in story text (shown faded in each box); if there is
-            no built-in text, the section is hidden. Please only include real information: no invented awards, clients, statistics or
-            certifications.
+            Write in LucianaSoul's own words. Sections left empty are hidden on the About page. Please only include real information: no
+            invented awards, clients, statistics or certifications.
           </p>
           {ABOUT_FIELDS.map(([key, label]) => (
             <Field key={key} label={label} hint="Separate paragraphs with a blank line.">
               <textarea
                 rows={5}
                 className={inputCls}
-                placeholder={DEFAULT_ABOUT_TEXT[key]}
                 value={s.about?.[key] ?? ''}
                 onChange={(e) => setS({ ...s, about: { ...s.about, [key]: e.target.value } })}
               />
             </Field>
           ))}
-          <MilestonesEditor
-            items={s.about?.milestones ?? []}
-            onChange={(milestones) => setS({ ...s, about: { ...s.about, milestones } })}
-          />
           <div>
-            <span className="field-label">Designer portrait (About page hero and homepage "Meet the designer")</span>
+            <span className="field-label">Designer portrait (About page hero)</span>
             <div className="flex items-center gap-4">
               <div className="w-28">
                 {s.about?.designerMedia && mediaById.get(s.about.designerMedia) ? (
@@ -334,57 +324,6 @@ function SmtpTab({
         )}
       </div>
     </div>
-  );
-}
-
-function MilestonesEditor({ items, onChange }: { items: Milestone[]; onChange: (items: Milestone[]) => void }) {
-  const update = (i: number, patch: Partial<Milestone>) => onChange(items.map((m, j) => (j === i ? { ...m, ...patch } : m)));
-  const move = (i: number, dir: -1 | 1) => {
-    const next = [...items];
-    [next[i], next[i + dir]] = [next[i + dir], next[i]];
-    onChange(next);
-  };
-
-  return (
-    <section className="border border-taupe/30 p-5">
-      <h2 className="font-serif text-2xl">Milestones</h2>
-      <p className="mt-1 text-xs text-taupe">
-        The "Not just clothes. A cause." timeline on the About page. While this list is empty, the built-in milestones are shown.
-      </p>
-      {items.length === 0 ? (
-        <button type="button" className={`${smallBtn} mt-4`} onClick={() => onChange(DEFAULT_MILESTONES.map((m) => ({ ...m })))}>
-          Edit the built-in milestones
-        </button>
-      ) : (
-        <ol className="mt-4 space-y-4">
-          {items.map((m, i) => (
-            <li key={i} className="grid gap-3 border-t border-taupe/30 pt-4 sm:grid-cols-[10rem_1fr]">
-              <input
-                className={inputCls}
-                placeholder="Date, e.g. July 2019"
-                value={m.date}
-                onChange={(e) => update(i, { date: e.target.value })}
-              />
-              <textarea rows={2} className={inputCls} placeholder="What happened" value={m.text} onChange={(e) => update(i, { text: e.target.value })} />
-              <div className="flex gap-2 sm:col-start-2">
-                <button type="button" className={smallBtn} disabled={i === 0} onClick={() => move(i, -1)}>
-                  Up
-                </button>
-                <button type="button" className={smallBtn} disabled={i === items.length - 1} onClick={() => move(i, 1)}>
-                  Down
-                </button>
-                <button type="button" className={dangerBtn} onClick={() => onChange(items.filter((_, j) => j !== i))}>
-                  Remove
-                </button>
-              </div>
-            </li>
-          ))}
-        </ol>
-      )}
-      <button type="button" className={`${smallBtn} mt-4 ${items.length === 0 ? 'ml-2' : ''}`} onClick={() => onChange([...items, { date: '', text: '' }])}>
-        Add milestone
-      </button>
-    </section>
   );
 }
 

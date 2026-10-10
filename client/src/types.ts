@@ -101,11 +101,6 @@ export interface CollectionCategory {
   visible: boolean;
 }
 
-export interface Milestone {
-  date: string;
-  text: string;
-}
-
 export interface SiteSettings {
   homepage: Record<HomepageSlot, Media[]>;
   about: {
@@ -115,7 +110,6 @@ export interface SiteSettings {
     bespoke?: string;
     london?: string;
     designerMedia?: Media | null;
-    milestones?: Milestone[];
   };
   sustainabilityText?: string;
   contact: {

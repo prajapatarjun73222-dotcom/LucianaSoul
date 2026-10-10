@@ -36,6 +36,7 @@ export default function InstagramMedia({ media, ratio = '4/5', className = '', i
             className="absolute inset-0 h-full w-full object-cover"
             src={media.url}
             poster={media.thumbnailUrl || undefined}
+            referrerPolicy="no-referrer"
             muted
             loop
             autoPlay

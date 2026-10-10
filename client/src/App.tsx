@@ -11,6 +11,7 @@ const Journal = lazy(() => import('./pages/Journal'));
 const JournalPost = lazy(() => import('./pages/JournalPost'));
 const Contact = lazy(() => import('./pages/Contact'));
 const EnquiryPage = lazy(() => import('./pages/EnquiryPage'));
+const WebDevelopment = lazy(() => import('./pages/WebDevelopment'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 const AdminApp = lazy(() => import('./admin/AdminApp'));
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="journal/:slug" element={<JournalPost />} />
           <Route path="contact" element={<Contact />} />
           <Route path="enquiry" element={<EnquiryPage />} />
+          <Route path="web-development" element={<WebDevelopment />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

@@ -1,8 +1,18 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../../lib/api';
 import { useFetch } from '../../lib/useFetch';
-import { HOMEPAGE_SLOTS, type AdminUser, type HomepageSlot, type Media, type Milestone, type Paged } from '../../types';
+import {
+  HOMEPAGE_SLOTS,
+  type AdminUser,
+  type DeveloperLead,
+  type DeveloperSettings,
+  type HomepageSlot,
+  type Media,
+  type Milestone,
+  type Paged,
+} from '../../types';
 import { DEFAULT_ABOUT_TEXT, DEFAULT_MILESTONES } from '../../lib/aboutContent';
+import { DEV_SERVICE_LABELS, formatDate } from '../../lib/labels';
 import TextTabs from '../../components/TextTabs';
 import MediaPicker from '../MediaPicker';
 import MediaThumb from '../MediaThumb';
@@ -18,8 +28,19 @@ interface AdminSettings {
   sustainabilityText: string;
   contact: { phone: string; whatsapp: string; email: string; addressLines: string[]; instagram: string; googleMapsUrl: string };
   seo: { title: string; description: string; ogImage: string };
-  smtp: { host: string; port: number; secure: boolean; user: string; pass: string; from: string; notifyTo: string; hasPassword?: boolean };
+  smtp: {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+    from: string;
+    notifyTo: string;
+    notifyEnquiries: boolean;
+    hasPassword?: boolean;
+  };
   smtpConfigured: boolean;
+  developer: DeveloperSettings;
 }
 
 const SLOT_INFO: Record<HomepageSlot, { label: string; hint: string }> = {
@@ -61,6 +82,7 @@ export default function SettingsPage() {
     { key: 'about', label: 'About' },
     { key: 'contact', label: 'Contact & SEO' },
     { key: 'email', label: 'Email (SMTP)' },
+    { key: 'developer', label: 'Developer contact' },
     ...(user?.role === 'developer' ? [{ key: 'users', label: 'Admin users' }] : []),
     { key: 'account', label: 'My account' },
   ];
@@ -244,6 +266,7 @@ export default function SettingsPage() {
       )}
 
       {tab === 'email' && <SmtpTab s={s} setS={setS} save={save} saving={saving} />}
+      {tab === 'developer' && <DeveloperTab s={s} setS={setS} save={save} saving={saving} />}
       {tab === 'users' && user?.role === 'developer' && <UsersTab />}
       {tab === 'account' && <AccountTab />}
     </>
@@ -281,10 +304,20 @@ function SmtpTab({
   return (
     <div className="max-w-3xl space-y-5">
       <p className={`p-4 text-sm ${s.smtpConfigured ? 'bg-sand text-deep' : 'border border-taupe/50 text-deep'}`}>
-        {s.smtpConfigured
-          ? 'Email notifications are ON. A notification is sent for every new enquiry.'
-          : 'Email notifications are OFF. Enquiries are still saved in Admin, Enquiries. Fill in host, username and password to turn emails on.'}
+        {!s.smtpConfigured
+          ? 'Email is not set up. Enquiries are still saved in Admin, Enquiries. Fill in host, username and password to turn emails on.'
+          : smtp.notifyEnquiries
+            ? `Email is set up. Every new enquiry is emailed to Luciana at ${smtp.notifyTo || 'her contact email'}.`
+            : 'Email is set up, but new-enquiry emails are switched OFF. Enquiries are still saved in Admin, Enquiries.'}
       </p>
+      <Toggle
+        checked={smtp.notifyEnquiries}
+        onChange={(notifyEnquiries) => {
+          setSmtp({ notifyEnquiries });
+          save({ smtp: { notifyEnquiries } as AdminSettings['smtp'] });
+        }}
+        label="Email Luciana when a new enquiry arrives"
+      />
       <div className="grid gap-5 sm:grid-cols-3">
         <Field label="SMTP host" className="sm:col-span-2" hint="Gmail: smtp.gmail.com">
           <input className={inputCls} value={smtp.host} onChange={(e) => setSmtp({ host: e.target.value })} />
@@ -304,7 +337,7 @@ function SmtpTab({
         <Field label="From address (optional)" className="sm:col-span-2" hint='e.g. "LucianaSoul Website <you@gmail.com>"'>
           <input className={inputCls} value={smtp.from} onChange={(e) => setSmtp({ from: e.target.value })} />
         </Field>
-        <Field label="Send notifications to">
+        <Field label="Luciana's email for new enquiries" hint="Every new enquiry is emailed here.">
           <input type="email" className={inputCls} value={smtp.notifyTo} onChange={(e) => setSmtp({ notifyTo: e.target.value })} />
         </Field>
       </div>
@@ -385,6 +418,131 @@ function MilestonesEditor({ items, onChange }: { items: Milestone[]; onChange: (
         Add milestone
       </button>
     </section>
+  );
+}
+
+function DeveloperTab({
+  s,
+  setS,
+  save,
+  saving,
+}: {
+  s: AdminSettings;
+  setS: (v: AdminSettings) => void;
+  save: (v: Partial<AdminSettings>) => Promise<void>;
+  saving: boolean;
+}) {
+  const toast = useToast();
+  const dev = s.developer;
+  const setDev = (patch: Partial<DeveloperSettings>) => setS({ ...s, developer: { ...dev, ...patch } });
+  const { data: leads, reload } = useFetch<{ items: DeveloperLead[]; unread: number }>('/admin/developer-leads');
+
+  async function setStatus(id: string, status: DeveloperLead['status']) {
+    try {
+      await api(`/admin/developer-leads/${id}`, { method: 'PUT', body: { status } });
+      reload();
+    } catch (err) {
+      toast((err as Error).message, 'error');
+    }
+  }
+
+  async function remove(id: string) {
+    if (!confirm('Delete this lead?')) return;
+    await api(`/admin/developer-leads/${id}`, { method: 'DELETE' });
+    toast('Lead deleted');
+    reload();
+  }
+
+  return (
+    <div className="max-w-3xl space-y-5">
+      <p className={`p-4 text-sm ${dev.enabled ? 'bg-sand text-deep' : 'border border-taupe/50 text-deep'}`}>
+        {dev.enabled
+          ? 'Developer contact is ON. The footer shows a "Website by" credit linking to the /web-development page.'
+          : 'Developer contact is OFF. The footer credit and the /web-development page are hidden from visitors.'}
+      </p>
+      <Toggle
+        checked={dev.enabled}
+        onChange={(enabled) => {
+          setDev({ enabled });
+          save({ developer: { ...dev, enabled } });
+        }}
+        label="Show developer contact on website"
+      />
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Developer name">
+          <input className={inputCls} value={dev.name} onChange={(e) => setDev({ name: e.target.value })} />
+        </Field>
+        <Field label="Email" hint="Leads are emailed here (uses the SMTP settings).">
+          <input type="email" className={inputCls} value={dev.email} onChange={(e) => setDev({ email: e.target.value })} />
+        </Field>
+        <Field label="WhatsApp number" hint="Digits only with country code, e.g. 919876543210">
+          <input className={inputCls} value={dev.whatsapp} onChange={(e) => setDev({ whatsapp: e.target.value.replace(/\D/g, '') })} />
+        </Field>
+        <Field label="Portfolio link (optional)">
+          <input type="url" className={inputCls} value={dev.portfolioUrl} onChange={(e) => setDev({ portfolioUrl: e.target.value })} />
+        </Field>
+      </div>
+      <Field label="Page headline">
+        <input className={inputCls} value={dev.headline} onChange={(e) => setDev({ headline: e.target.value })} />
+      </Field>
+      <Field label="Intro text">
+        <textarea rows={4} className={inputCls} value={dev.intro} onChange={(e) => setDev({ intro: e.target.value })} />
+      </Field>
+      <button type="button" disabled={saving} className="btn-primary px-6 py-3" onClick={() => save({ developer: dev })}>
+        {saving ? 'Saving...' : 'Save developer contact'}
+      </button>
+
+      <h2 className="pt-8 font-serif text-2xl">
+        Leads {leads && leads.unread > 0 && <span className="label ml-2 text-taupe">{leads.unread} new</span>}
+      </h2>
+      {!leads?.items.length ? (
+        <p className="text-sm text-taupe">No leads yet.</p>
+      ) : (
+        <ul className="divide-y divide-taupe/30 border-y border-taupe/30">
+          {leads.items.map((l) => (
+            <li key={l._id} className="space-y-2 py-4 text-sm">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">
+                    {l.name} <span className="label ml-2 text-taupe">{DEV_SERVICE_LABELS[l.service] ?? l.service}</span>
+                  </p>
+                  <p className="text-xs text-deep">
+                    <a href={`mailto:${l.email}`} className="link-underline">
+                      {l.email}
+                    </a>
+                    {l.whatsapp && (
+                      <>
+                        {' '}
+                        •{' '}
+                        <a href={`https://wa.me/${l.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="link-underline">
+                          {l.whatsapp}
+                        </a>
+                      </>
+                    )}{' '}
+                    • {formatDate(l.createdAt)}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    className="border border-taupe/50 bg-cream px-2 py-1 text-xs"
+                    value={l.status}
+                    onChange={(e) => setStatus(l._id, e.target.value as DeveloperLead['status'])}
+                  >
+                    <option value="new">New</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                  <button type="button" className={dangerBtn} onClick={() => remove(l._id)}>
+                    Delete
+                  </button>
+                </div>
+              </div>
+              {l.message && <p className="whitespace-pre-wrap text-deep">{l.message}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

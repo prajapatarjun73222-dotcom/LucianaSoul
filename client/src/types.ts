@@ -128,6 +128,31 @@ export interface SiteSettings {
   };
   seo: { title: string; description: string; ogImage?: string };
   collectionCategories: CollectionCategory[];
+  developer?: DeveloperSettings;
+}
+
+export interface DeveloperSettings {
+  enabled: boolean;
+  name: string;
+  email: string;
+  whatsapp: string;
+  portfolioUrl: string;
+  headline: string;
+  intro: string;
+}
+
+export type DevService = 'new_website' | 'redesign' | 'bug_fix' | 'maintenance' | 'other';
+
+export interface DeveloperLead {
+  _id: string;
+  name: string;
+  email: string;
+  whatsapp?: string;
+  service: DevService;
+  message?: string;
+  status: 'new' | 'contacted' | 'archived';
+  emailNotified?: boolean;
+  createdAt: string;
 }
 
 export interface Paged<T> {

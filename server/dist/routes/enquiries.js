@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { Types } from 'mongoose';
 import { Enquiry, CONTACT_METHODS, ENQUIRY_STATUSES, ENQUIRY_TYPES } from '../models/Enquiry.js';
 import { Product } from '../models/Product.js';
+import { getSettings } from '../models/Settings.js';
 import { requireAuth } from '../middleware/auth.js';
 import { asyncHandler, validateBody } from '../middleware/validate.js';
 import { enquiryEmail, sendMail } from '../services/mailer.js';
@@ -39,14 +40,17 @@ publicEnquiries.post('/', enquiryLimiter, validateBody(enquirySchema), asyncHand
         productName = product?.name ?? '';
     }
     const enquiry = await Enquiry.create({ ...body, productName });
-    try {
-        const mail = enquiryEmail(enquiry.toObject());
-        const result = await sendMail({ ...mail, replyTo: enquiry.email });
-        if (result.sent)
-            await Enquiry.updateOne({ _id: enquiry._id }, { emailNotified: true });
-    }
-    catch (err) {
-        console.error('[mail] enquiry notification failed:', err.message);
+    const settings = await getSettings();
+    if (settings.smtp?.notifyEnquiries !== false) {
+        try {
+            const mail = enquiryEmail(enquiry.toObject());
+            const result = await sendMail({ ...mail, replyTo: enquiry.email });
+            if (result.sent)
+                await Enquiry.updateOne({ _id: enquiry._id }, { emailNotified: true });
+        }
+        catch (err) {
+            console.error('[mail] enquiry notification failed:', err.message);
+        }
     }
     res.status(201).json({ ok: true, id: enquiry._id });
 }));

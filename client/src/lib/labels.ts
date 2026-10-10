@@ -38,6 +38,14 @@ export const ENQUIRY_TYPE_LABELS: Record<string, string> = {
   other: 'Other',
 };
 
+export const DEV_SERVICE_LABELS: Record<string, string> = {
+  new_website: 'New website',
+  redesign: 'Website redesign',
+  bug_fix: 'Bug fix / issue',
+  maintenance: 'Maintenance & updates',
+  other: 'Other',
+};
+
 export const SOURCE_LABELS: Record<string, string> = {
   instagram: 'Instagram',
   google_maps: 'Google Maps',

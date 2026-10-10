@@ -7,6 +7,7 @@ import { BotanicalDivider } from './Botanical';
 
 export default function Footer() {
   const { settings, contact } = useSettings();
+  const dev = settings?.developer;
   const gallery = (settings?.homepage?.footerGallery ?? []).slice(0, 6);
 
   return (
@@ -102,6 +103,23 @@ export default function Footer() {
         <p>© {new Date().getFullYear()} LucianaSoul. All rights reserved.</p>
         <p>Designed and made in London.</p>
       </div>
+
+      {dev?.enabled && (
+        <div className="border-t border-taupe/30 bg-stone/40">
+          <Link
+            to="/web-development"
+            className="container-editorial group flex flex-col gap-1 py-4 text-xs text-deep sm:flex-row sm:items-center sm:justify-between"
+          >
+            <span>Website designed & built by {dev.name || 'the developer'}</span>
+            <span className="label flex items-center gap-2 text-ink">
+              Need a website or fixes for yours? Let's talk
+              <span aria-hidden className="transition-transform group-hover:translate-x-1">
+                →
+              </span>
+            </span>
+          </Link>
+        </div>
+      )}
     </footer>
   );
 }

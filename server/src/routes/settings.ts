@@ -37,6 +37,17 @@ const settingsSchema = z
       })
       .partial(),
     seo: z.object({ title: z.string(), description: z.string(), ogImage: z.string() }).partial(),
+    developer: z
+      .object({
+        enabled: z.boolean(),
+        name: z.string().max(120),
+        email: z.string().email().or(z.literal('')),
+        whatsapp: z.string().regex(/^\d{6,15}$/, 'Digits only, including country code').or(z.literal('')),
+        portfolioUrl: z.string().url().or(z.literal('')),
+        headline: z.string().max(200),
+        intro: z.string().max(2000),
+      })
+      .partial(),
     collectionCategories: z.array(z.object({ key: z.string(), label: z.string(), visible: z.boolean() })),
     smtp: z
       .object({
@@ -47,6 +58,7 @@ const settingsSchema = z
         pass: z.string(),
         from: z.string(),
         notifyTo: z.string().email().or(z.literal('')),
+        notifyEnquiries: z.boolean(),
       })
       .partial(),
   })

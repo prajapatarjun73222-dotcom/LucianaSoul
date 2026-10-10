@@ -25,6 +25,10 @@ const settingsSchema = new Schema({
         bespoke: { type: String, default: '' },
         london: { type: String, default: '' },
         designerMedia: { type: Schema.Types.ObjectId, ref: 'Media' },
+        milestones: {
+            type: [{ _id: false, date: { type: String, default: '' }, text: { type: String, default: '' } }],
+            default: [],
+        },
     },
     sustainabilityText: { type: String, default: '' },
     contact: {
@@ -56,6 +60,18 @@ const settingsSchema = new Schema({
             { key: 'archive', label: 'Archive', visible: true },
         ],
     },
+    developer: {
+        enabled: { type: Boolean, default: false },
+        name: { type: String, default: 'Arjun' },
+        email: { type: String, default: '' },
+        whatsapp: { type: String, default: '' },
+        portfolioUrl: { type: String, default: '' },
+        headline: { type: String, default: 'Need a website like this one?' },
+        intro: {
+            type: String,
+            default: 'I design and build fast, beautiful websites for small businesses and creatives, and I fix and maintain existing ones. Tell me what you need and I will get back to you.',
+        },
+    },
     smtp: {
         host: { type: String, default: '' },
         port: { type: Number, default: 587 },
@@ -64,6 +80,7 @@ const settingsSchema = new Schema({
         pass: { type: String, default: '' },
         from: { type: String, default: '' },
         notifyTo: { type: String, default: 'pulciniluciana@gmail.com' },
+        notifyEnquiries: { type: Boolean, default: true },
     },
 }, { timestamps: true });
 export const Settings = model('Settings', settingsSchema);

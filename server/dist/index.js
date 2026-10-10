@@ -15,6 +15,7 @@ import productRoutes from './routes/products.js';
 import blogRoutes from './routes/blog.js';
 import { adminEnquiries, publicEnquiries } from './routes/enquiries.js';
 import { adminSettings, publicSettings } from './routes/settings.js';
+import { adminDeveloperLeads, publicDeveloperLeads } from './routes/developerLeads.js';
 import sitemapRoutes from './routes/sitemap.js';
 const app = express();
 app.set('trust proxy', 1);
@@ -31,6 +32,8 @@ app.use('/api/enquiries', publicEnquiries);
 app.use('/api/admin/enquiries', adminEnquiries);
 app.use('/api/settings', publicSettings);
 app.use('/api/admin/settings', adminSettings);
+app.use('/api/developer-leads', publicDeveloperLeads);
+app.use('/api/admin/developer-leads', adminDeveloperLeads);
 app.use(sitemapRoutes);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 // Serve the built client in production.

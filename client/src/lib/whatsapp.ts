@@ -10,4 +10,5 @@ export const waMessages = {
   bespoke: "Hi LucianaSoul, I'd like to discuss a bespoke design.",
   piece: (name: string) => `Hi LucianaSoul, I'm interested in ${withArticle(name)} and would like to know more.`,
   availability: (name: string) => `Hi LucianaSoul, could you tell me about the availability of ${withArticle(name)}?`,
+  developer: (name: string) => `Hi ${name}, I saw your work on the LucianaSoul website and I'd like to talk about a website.`,
 };

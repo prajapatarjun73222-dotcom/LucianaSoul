@@ -77,6 +77,8 @@ export default function SmartImage({
           srcSet={buildSrcSet(current)}
           sizes={sizes}
           alt={alt}
+          // Google Drive thumbnails return 429 when the page URL is sent as Referer.
+          referrerPolicy="no-referrer"
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
           {...(eager ? { fetchpriority: 'high' } : {})}

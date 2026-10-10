@@ -22,6 +22,7 @@ const settingsSchema = z
         bespoke: z.string(),
         london: z.string(),
         designerMedia: objectId.nullable(),
+        milestones: z.array(z.object({ date: z.string().max(60), text: z.string().max(600) })).max(30),
       })
       .partial(),
     sustainabilityText: z.string(),

@@ -29,6 +29,10 @@ const settingsSchema = new Schema(
       bespoke: { type: String, default: '' },
       london: { type: String, default: '' },
       designerMedia: { type: Schema.Types.ObjectId, ref: 'Media' },
+      milestones: {
+        type: [{ _id: false, date: { type: String, default: '' }, text: { type: String, default: '' } }],
+        default: [],
+      },
     },
     sustainabilityText: { type: String, default: '' },
     contact: {

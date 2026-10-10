@@ -8,11 +8,11 @@ import { aboutMilestones, aboutPortrait, aboutText } from '../lib/aboutContent';
 import type { Media } from '../types';
 
 const SECTIONS = [
-  { key: 'designer', label: '01', title: 'The Designer' },
-  { key: 'philosophy', label: '02', title: 'The Philosophy' },
-  { key: 'upcycling', label: '03', title: 'Up-cycling' },
-  { key: 'bespoke', label: '04', title: 'Bespoke Design' },
-  { key: 'london', label: '05', title: 'London' },
+  { key: 'designer', title: 'The Designer' },
+  { key: 'philosophy', title: 'The Philosophy' },
+  { key: 'upcycling', title: 'Up-cycling' },
+  { key: 'bespoke', title: 'Bespoke Design' },
+  { key: 'london', title: 'London' },
 ] as const;
 
 export default function About() {
@@ -62,7 +62,7 @@ export default function About() {
           <section key={section.key} className={`${i % 2 === 0 ? 'bg-sand' : ''} py-20 lg:py-28`}>
             <div className="container-editorial grid items-center gap-12 lg:grid-cols-12">
               <Reveal className={`lg:col-span-5 ${flip ? 'lg:order-2 lg:col-start-8' : ''}`}>
-                <p className="label text-taupe">{section.label}</p>
+                <p className="label text-taupe">{String(i + 1).padStart(2, '0')}</p>
                 <h2 className="display mt-4 text-5xl sm:text-6xl">{section.title}</h2>
                 <BotanicalDivider className="mt-6 h-6 w-32 text-taupe" />
                 <div className="mt-8 space-y-5 leading-relaxed text-deep">

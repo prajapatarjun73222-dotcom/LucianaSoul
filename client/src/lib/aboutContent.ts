@@ -18,10 +18,10 @@ export const DEFAULT_ABOUT_TEXT: Record<AboutTextKey, string> = {
   philosophy:
     'Not just clothes. A cause.\n\nLucianaSoul is inspired by Luciana\'s own experience of homelessness. Through inclusive fashion events, international exhibitions and her collaboration with Crisis, she uses her work to support efforts to end homelessness.',
   upcycling:
-    'Reusing existing textiles is at the heart of every piece. Fabrics that already have a history are reimagined into new, individual garments.\n\nSupported by an UnLtd grant, LucianaSoul runs up-cycling workshops that welcome people of all ages and backgrounds to learn and create together.',
+    'Reusing existing textiles is at the heart of every piece. Fabrics that already have a history are reimagined into new, individual garments.\n\nWhile based in Bermondsey, LucianaSoul ran up-cycling workshops, supported by an UnLtd grant, that welcomed people of all ages and backgrounds to learn and create together.',
   bespoke: '',
   london:
-    'LucianaSoul is rooted in Bermondsey, South East London: from a catwalk at the Old Biscuit Factory to community workshops with South Bermondsey Big Local.',
+    'LucianaSoul is now based on Finchley Road, North London.\n\nIts story began in Bermondsey: from a catwalk at the Old Biscuit Factory to community up-cycling workshops with South Bermondsey Big Local.',
 };
 
 export const DEFAULT_MILESTONES: Milestone[] = [

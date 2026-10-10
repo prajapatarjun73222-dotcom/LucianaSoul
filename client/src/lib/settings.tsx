@@ -6,7 +6,7 @@ export const DEFAULT_CONTACT: SiteSettings['contact'] = {
   phone: '+44 7454 720895',
   whatsapp: '447454720895',
   email: 'pulciniluciana@gmail.com',
-  addressLines: ['210/212 Southwark Park Road', 'London', 'SE16 3RX'],
+  addressLines: ['Finchley Road', 'North London', 'NW2'],
   instagram: 'luciana_soul',
 };
 

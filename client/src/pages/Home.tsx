@@ -26,7 +26,7 @@ const PIECE_LAYOUT = [
 const SUSTAINABILITY_LABELS = ['Up-cycled textiles', 'Individual design', 'Bespoke craft', 'Designed in London'];
 
 export default function Home() {
-  const { settings, loading } = useSettings();
+  const { settings, loading, contact } = useSettings();
   const slots = settings?.homepage;
   const hero = slots?.hero?.[0];
   const { data: featured } = useFetch<Paged<Product>>('/products?featured=true&limit=6');
@@ -44,16 +44,15 @@ export default function Home() {
           name: 'LucianaSoul',
           description: DEFAULT_DESCRIPTION,
           url: typeof window !== 'undefined' ? window.location.origin : undefined,
-          telephone: '+44 7454 720895',
-          email: 'pulciniluciana@gmail.com',
+          telephone: contact.phone,
+          email: contact.email,
           address: {
             '@type': 'PostalAddress',
-            streetAddress: '210/212 Southwark Park Road',
+            streetAddress: contact.addressLines.join(', '),
             addressLocality: 'London',
-            postalCode: 'SE16 3RX',
             addressCountry: 'GB',
           },
-          sameAs: ['https://www.instagram.com/luciana_soul/'],
+          sameAs: [instagramUrl(contact.instagram)],
           alternateName: DEFAULT_TITLE,
         }}
       />

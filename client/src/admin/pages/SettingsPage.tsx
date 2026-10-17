@@ -469,8 +469,8 @@ function DeveloperTab({
     <div className="max-w-3xl space-y-5">
       <p className={`p-4 text-sm ${dev.enabled ? 'bg-sand text-deep' : 'border border-taupe/50 text-deep'}`}>
         {dev.enabled
-          ? 'Developer contact is ON. The footer shows a "Website by" credit linking to the /web-development page.'
-          : 'Developer contact is OFF. The footer credit and the /web-development page are hidden from visitors.'}
+          ? 'Developer contact is ON. A small "by" credit shows in the header, and "Website by" shows in the footer. Both link to the /web-development page.'
+          : 'Developer contact is OFF. The header and footer credits and the /web-development page are hidden from visitors.'}
       </p>
       <Toggle
         checked={dev.enabled}

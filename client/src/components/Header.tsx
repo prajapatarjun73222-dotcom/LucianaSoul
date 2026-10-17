@@ -16,7 +16,8 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { pathname } = useLocation();
-  const { contact } = useSettings();
+  const { contact, settings } = useSettings();
+  const dev = settings?.developer;
 
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
@@ -53,12 +54,19 @@ export default function Header() {
             <MenuIcon />
           </button>
 
-          <Link to="/" className="flex items-center gap-3" aria-label="LucianaSoul home">
-            <img src="/logo.png" alt="" className="hidden h-9 w-9 object-cover mix-blend-multiply sm:block lg:h-11 lg:w-11" />
-            <span className="font-serif text-lg uppercase tracking-[0.24em] text-deep sm:text-xl lg:text-2xl lg:tracking-[0.28em]">
-              LucianaSoul
-            </span>
-          </Link>
+          <div className="flex flex-col items-center">
+            <Link to="/" className="flex items-center gap-3" aria-label="LucianaSoul home">
+              <img src="/logo.png" alt="" className="hidden h-9 w-9 object-cover mix-blend-multiply sm:block lg:h-11 lg:w-11" />
+              <span className="font-serif text-lg uppercase tracking-[0.24em] text-deep sm:text-xl lg:text-2xl lg:tracking-[0.28em]">
+                LucianaSoul
+              </span>
+            </Link>
+            {dev?.enabled && (
+              <Link to="/web-development" className="text-[10px] leading-none tracking-wide text-taupe hover:text-deep">
+                by {dev.name || 'the developer'}
+              </Link>
+            )}
+          </div>
 
           <div className="flex items-center justify-end gap-8">
             <nav className="hidden items-center gap-8 lg:flex" aria-label="Secondary">

@@ -37,7 +37,10 @@ interface AdminSettings {
     from: string;
     notifyTo: string;
     notifyEnquiries: boolean;
+    enabled?: boolean;
+    brevoApiKey?: string;
     hasPassword?: boolean;
+    hasBrevoApiKey?: boolean;
   };
   smtpConfigured: boolean;
   developer: DeveloperSettings;
@@ -81,7 +84,7 @@ export default function SettingsPage() {
     { key: 'homepage', label: 'Homepage media' },
     { key: 'about', label: 'About' },
     { key: 'contact', label: 'Contact & SEO' },
-    { key: 'email', label: 'Email (SMTP)' },
+    { key: 'email', label: 'Email' },
     { key: 'developer', label: 'Developer contact' },
     ...(user?.role === 'developer' ? [{ key: 'users', label: 'Admin users' }] : []),
     { key: 'account', label: 'My account' },
@@ -308,7 +311,7 @@ function SmtpTab({
     <div className="max-w-3xl space-y-5">
       <p className={`p-4 text-sm ${s.smtpConfigured ? 'bg-sand text-deep' : 'border border-taupe/50 text-deep'}`}>
         {!s.smtpConfigured
-          ? 'Email is not set up. Enquiries are still saved in Admin, Enquiries. Fill in host, username and password to turn emails on.'
+          ? 'Email is not set up. Enquiries are still saved in Admin, Enquiries. Add a Brevo API key to turn emails on.'
           : isDeveloper
             ? `Email is set up. Every new enquiry is emailed to you (${developerEmail || 'developer email'})${
                 smtp.notifyEnquiries ? ` and to Luciana (${smtp.notifyTo || 'her contact email'}).` : '. Emails to Luciana are OFF.'
@@ -325,23 +328,23 @@ function SmtpTab({
           label="Also email Luciana when a new enquiry arrives (only you can change this)"
         />
       )}
-      <div className="grid gap-5 sm:grid-cols-3">
-        <Field label="SMTP host" className="sm:col-span-2" hint="Gmail: smtp.gmail.com">
-          <input className={inputCls} value={smtp.host} onChange={(e) => setSmtp({ host: e.target.value })} />
-        </Field>
-        <Field label="Port" hint="587 (TLS) or 465 (SSL)">
-          <input type="number" className={inputCls} value={smtp.port} onChange={(e) => setSmtp({ port: Number(e.target.value) })} />
-        </Field>
-        <Field label="Username">
-          <input className={inputCls} value={smtp.user} autoComplete="off" onChange={(e) => setSmtp({ user: e.target.value })} />
-        </Field>
-        <Field label="Password" hint={smtp.hasPassword ? 'Saved. Leave empty to keep it.' : 'For Gmail, use an App Password.'}>
-          <input type="password" className={inputCls} value={smtp.pass} autoComplete="new-password" onChange={(e) => setSmtp({ pass: e.target.value })} />
-        </Field>
-        <div className="flex items-end pb-3">
-          <Toggle checked={smtp.secure} onChange={(v) => setSmtp({ secure: v })} label="Use SSL (port 465)" />
-        </div>
-        <Field label="From address (optional)" className="sm:col-span-2" hint='e.g. "LucianaSoul Website <you@gmail.com>"'>
+      <div className="grid gap-5 sm:grid-cols-2">
+        {isDeveloper && (
+          <Field
+            label="Brevo API key"
+            className="sm:col-span-2"
+            hint={smtp.hasBrevoApiKey ? 'Saved. Leave empty to keep it.' : 'From Brevo: SMTP & API. Leave empty to use the key on the server.'}
+          >
+            <input
+              type="password"
+              className={inputCls}
+              value={smtp.brevoApiKey ?? ''}
+              autoComplete="new-password"
+              onChange={(e) => setSmtp({ brevoApiKey: e.target.value })}
+            />
+          </Field>
+        )}
+        <Field label="From address (optional)" hint="Empty uses LucianaSoul Website <fixhance@gmail.com>. Must be a verified Brevo sender.">
           <input className={inputCls} value={smtp.from} onChange={(e) => setSmtp({ from: e.target.value })} />
         </Field>
         <Field label="Luciana's email for new enquiries" hint="Used when emails to Luciana are switched on.">
@@ -354,8 +357,8 @@ function SmtpTab({
           disabled={saving}
           className="btn-primary px-6 py-3"
           onClick={() => {
-            const { hasPassword: _h, ...rest } = smtp;
-            save({ smtp: rest });
+            const { hasPassword: _h, hasBrevoApiKey: _k, ...rest } = smtp;
+            save({ smtp: { ...rest, enabled: true } });
           }}
         >
           {saving ? 'Saving...' : 'Save email settings'}
@@ -367,7 +370,9 @@ function SmtpTab({
           <button
             type="button"
             className={dangerBtn}
-            onClick={() => save({ smtp: { ...smtp, host: '', user: '', pass: '' } as AdminSettings['smtp'] }).then(() => setSmtp({ host: '', user: '' }))}
+            onClick={() =>
+              save({ smtp: { enabled: false } as AdminSettings['smtp'] }).then(() => setSmtp({ enabled: false }))
+            }
           >
             Turn off emails
           </button>
@@ -479,7 +484,7 @@ function DeveloperTab({
         <Field label="Developer name">
           <input className={inputCls} value={dev.name} onChange={(e) => setDev({ name: e.target.value })} />
         </Field>
-        <Field label="Email" hint="Leads are emailed here (uses the SMTP settings).">
+        <Field label="Email" hint="Leads are emailed here.">
           <input type="email" className={inputCls} value={dev.email} onChange={(e) => setDev({ email: e.target.value })} />
         </Field>
         <Field label="WhatsApp number" hint="Digits only with country code, e.g. 919876543210">

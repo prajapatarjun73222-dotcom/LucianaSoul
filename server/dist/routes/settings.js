@@ -56,6 +56,8 @@ const settingsSchema = z
         from: z.string(),
         notifyTo: z.string().email().or(z.literal('')),
         notifyEnquiries: z.boolean(),
+        enabled: z.boolean(),
+        brevoApiKey: z.string(),
     })
         .partial(),
 })
@@ -81,8 +83,8 @@ function applySettings(settings, body) {
             continue;
         }
         for (const [key, v] of Object.entries(value)) {
-            // An empty SMTP password from the form means "keep the stored one".
-            if (section === 'smtp' && key === 'pass' && v === '')
+            // An empty password or Brevo key from the form means "keep the stored one".
+            if (section === 'smtp' && (key === 'pass' || key === 'brevoApiKey') && v === '')
                 continue;
             settings.set(`${section}.${key}`, v === null ? undefined : v);
         }
@@ -94,14 +96,22 @@ adminSettings.get('/', asyncHandler(async (_req, res) => {
     const smtp = settings.smtp ?? {};
     res.json({
         ...settings,
-        smtp: { ...smtp, pass: '', hasPassword: Boolean(smtp.pass) },
+        smtp: {
+            ...smtp,
+            pass: '',
+            brevoApiKey: '',
+            hasPassword: Boolean(smtp.pass),
+            hasBrevoApiKey: Boolean(smtp.brevoApiKey),
+        },
         smtpConfigured: isSmtpConfigured(smtp),
     });
 }));
 async function updateSettings(req, res) {
     const body = req.body;
-    if (req.admin?.role !== 'developer' && body.smtp)
+    if (req.admin?.role !== 'developer' && body.smtp) {
         delete body.smtp.notifyEnquiries;
+        delete body.smtp.brevoApiKey;
+    }
     const settings = await getSettings();
     applySettings(settings, body);
     await settings.save();
@@ -116,7 +126,7 @@ adminSettings.post('/test-email', asyncHandler(async (_req, res) => {
             text: 'Email notifications from the LucianaSoul website are working.',
         });
         if (!result.sent)
-            return res.status(400).json({ error: 'SMTP is not configured yet' });
+            return res.status(400).json({ error: 'Email is not configured yet' });
         res.json({ ok: true });
     }
     catch (err) {

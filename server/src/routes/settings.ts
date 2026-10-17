@@ -59,6 +59,8 @@ const settingsSchema = z
         from: z.string(),
         notifyTo: z.string().email().or(z.literal('')),
         notifyEnquiries: z.boolean(),
+        enabled: z.boolean(),
+        brevoApiKey: z.string(),
       })
       .partial(),
   })
@@ -89,8 +91,8 @@ function applySettings(settings: Awaited<ReturnType<typeof getSettings>>, body: 
       continue;
     }
     for (const [key, v] of Object.entries(value)) {
-      // An empty SMTP password from the form means "keep the stored one".
-      if (section === 'smtp' && key === 'pass' && v === '') continue;
+      // An empty password or Brevo key from the form means "keep the stored one".
+      if (section === 'smtp' && (key === 'pass' || key === 'brevoApiKey') && v === '') continue;
       settings.set(`${section}.${key}`, v === null ? undefined : v);
     }
   }
@@ -102,10 +104,16 @@ adminSettings.get(
   '/',
   asyncHandler(async (_req, res) => {
     const settings = (await getSettings()).toObject();
-    const smtp: { pass?: string | null } & Record<string, unknown> = settings.smtp ?? {};
+    const smtp: { pass?: string | null; brevoApiKey?: string | null } & Record<string, unknown> = settings.smtp ?? {};
     res.json({
       ...settings,
-      smtp: { ...smtp, pass: '', hasPassword: Boolean(smtp.pass) },
+      smtp: {
+        ...smtp,
+        pass: '',
+        brevoApiKey: '',
+        hasPassword: Boolean(smtp.pass),
+        hasBrevoApiKey: Boolean(smtp.brevoApiKey),
+      },
       smtpConfigured: isSmtpConfigured(smtp),
     });
   }),
@@ -113,7 +121,10 @@ adminSettings.get(
 
 async function updateSettings(req: import('express').Request, res: import('express').Response) {
   const body = req.body as z.infer<typeof settingsSchema>;
-  if (req.admin?.role !== 'developer' && body.smtp) delete body.smtp.notifyEnquiries;
+  if (req.admin?.role !== 'developer' && body.smtp) {
+    delete body.smtp.notifyEnquiries;
+    delete body.smtp.brevoApiKey;
+  }
   const settings = await getSettings();
   applySettings(settings, body);
   await settings.save();
@@ -131,7 +142,7 @@ adminSettings.post(
         subject: 'LucianaSoul website: test email',
         text: 'Email notifications from the LucianaSoul website are working.',
       });
-      if (!result.sent) return res.status(400).json({ error: 'SMTP is not configured yet' });
+      if (!result.sent) return res.status(400).json({ error: 'Email is not configured yet' });
       res.json({ ok: true });
     } catch (err) {
       res.status(400).json({ error: `Could not send: ${(err as Error).message}` });

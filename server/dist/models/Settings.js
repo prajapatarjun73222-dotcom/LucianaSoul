@@ -81,6 +81,8 @@ const settingsSchema = new Schema({
         from: { type: String, default: '' },
         notifyTo: { type: String, default: 'pulciniluciana@gmail.com' },
         notifyEnquiries: { type: Boolean, default: true },
+        enabled: { type: Boolean, default: true },
+        brevoApiKey: { type: String, default: '' },
     },
 }, { timestamps: true });
 export const Settings = model('Settings', settingsSchema);

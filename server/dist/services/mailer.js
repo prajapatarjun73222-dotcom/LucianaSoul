@@ -1,36 +1,65 @@
-import nodemailer from 'nodemailer';
+import { config } from '../config.js';
 import { getSettings } from '../models/Settings.js';
 import { takeEmailQuota } from './spamGuard.js';
-export function isSmtpConfigured(smtp) {
-    return Boolean(smtp?.host && smtp?.user && smtp?.pass);
+const DEFAULT_SENDER = { name: 'LucianaSoul Website', email: 'fixhance@gmail.com' };
+function brevoKey(smtp) {
+    return smtp?.brevoApiKey || config.brevoApiKey;
 }
-function transportFor(smtp) {
-    return nodemailer.createTransport({
-        host: smtp.host,
-        port: smtp.port ?? 587,
-        secure: smtp.secure ?? false,
-        auth: { user: smtp.user, pass: smtp.pass },
-    });
+function senderFor(from) {
+    const raw = (from ?? '').trim();
+    if (!raw)
+        return DEFAULT_SENDER;
+    const named = raw.match(/^(.*?)<([^>]+)>$/);
+    if (named) {
+        const name = named[1].trim().replace(/^"|"$/g, '');
+        const email = named[2].trim();
+        return { name: name || DEFAULT_SENDER.name, email };
+    }
+    if (raw.includes('@'))
+        return { name: DEFAULT_SENDER.name, email: raw };
+    return DEFAULT_SENDER;
+}
+export function isSmtpConfigured(smtp) {
+    if (smtp?.enabled === false)
+        return false;
+    return Boolean(brevoKey(smtp));
 }
 export async function sendMail(opts) {
     const settings = await getSettings();
     const smtp = settings.smtp;
     if (!isSmtpConfigured(smtp)) {
-        console.log('[mail] SMTP not configured in admin settings; skipping email');
+        console.log('[mail] email is turned off or the Brevo API key is missing; skipping email');
+        return { sent: false, reason: 'not_configured' };
+    }
+    const to = opts.to || smtp?.notifyTo || settings.contact?.email || '';
+    if (!to) {
+        console.log('[mail] no recipient address; skipping email');
         return { sent: false, reason: 'not_configured' };
     }
     if (!takeEmailQuota()) {
         console.warn('[mail] daily email limit reached; skipping email (submissions are still saved)');
         return { sent: false, reason: 'daily_limit' };
     }
-    await transportFor(smtp).sendMail({
-        from: smtp.from || `LucianaSoul Website <${smtp.user}>`,
-        to: opts.to || smtp.notifyTo || settings.contact?.email || smtp.user,
-        replyTo: opts.replyTo,
-        subject: opts.subject,
-        text: opts.text,
-        html: opts.html,
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+            'api-key': brevoKey(smtp),
+            'content-type': 'application/json',
+            accept: 'application/json',
+        },
+        body: JSON.stringify({
+            sender: senderFor(smtp?.from),
+            to: [{ email: to }],
+            replyTo: opts.replyTo ? { email: opts.replyTo } : undefined,
+            subject: opts.subject,
+            textContent: opts.text,
+            htmlContent: opts.html,
+        }),
     });
+    if (!response.ok) {
+        const body = (await response.json().catch(() => null));
+        throw new Error(body?.message || `Brevo rejected the email (${response.status})`);
+    }
     return { sent: true };
 }
 const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

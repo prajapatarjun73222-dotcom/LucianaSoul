@@ -65,7 +65,7 @@ export default function Dashboard() {
               Choose which media appears on the homepage in <Link to="/admin/settings" className="underline">Settings</Link>.
             </li>
             <li>Write the designer story on the About tab in Settings.</li>
-            <li>Configure SMTP in Settings to receive enquiry emails (optional; enquiries are always saved here).</li>
+            <li>Add the Brevo API key in Settings to receive enquiry emails (optional; enquiries are always saved here).</li>
           </ol>
         </section>
       </div>

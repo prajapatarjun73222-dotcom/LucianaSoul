@@ -22,6 +22,7 @@ export const config = {
     turnstileSecret: process.env.TURNSTILE_SECRET_KEY ?? '',
     emailDailyLimit: Number(process.env.EMAIL_DAILY_LIMIT ?? 60),
   },
+  brevoApiKey: process.env.BREVO_API_KEY ?? '',
   admin: {
     email: process.env.ADMIN_EMAIL,
     password: process.env.ADMIN_PASSWORD,

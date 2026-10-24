@@ -98,13 +98,7 @@ export default function InstagramMedia({ media, ratio = '4/5', className = '', i
       )}
       {!showFile && !showEmbed && (
         <>
-          <SmartImage
-            src={poster}
-            alt={alt}
-            ratio={isInstagram ? ratio : undefined}
-            sizes={sizes}
-            className={isInstagram ? 'zoom-hover' : 'absolute inset-0 zoom-hover'}
-          />
+          <SmartImage src={poster} alt={alt} ratio={ratio} sizes={sizes} className="zoom-hover" eager />
           <div className="absolute inset-0 bg-ink/0 transition-colors duration-700 group-hover:bg-ink/25" />
           {isVideo && canPlayHere && (
             <button

@@ -1,4 +1,5 @@
 import type { Media } from '../types';
+import { displayImageUrl } from '../lib/driveImage';
 import SmartImage from './SmartImage';
 import InstagramMedia from './InstagramMedia';
 
@@ -37,5 +38,8 @@ export default function MediaView({ media, ratio, className = '', imgClassName, 
 
 export function posterOf(media?: Media | null) {
   if (!media) return '';
-  return media.thumbnailUrl || (media.kind === 'image' || media.kind === 'instagram_post' ? media.url : '');
+  const thumbnail = displayImageUrl(media.thumbnailUrl);
+  if (thumbnail) return thumbnail;
+  if (media.kind === 'image' || media.kind === 'instagram_post') return displayImageUrl(media.url) ?? '';
+  return '';
 }

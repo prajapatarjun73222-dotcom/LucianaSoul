@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { displayImageUrl } from '../lib/driveImage';
 
 interface Props {
   src?: string | null;
@@ -38,7 +39,10 @@ export default function SmartImage({
   sizes = '(min-width: 1024px) 50vw, 100vw',
   eager = false,
 }: Props) {
-  const candidates = useMemo(() => [src, ...fallbacks].filter((s): s is string => Boolean(s)), [src, fallbacks]);
+  const candidates = useMemo(
+    () => [src, ...fallbacks].map((item) => displayImageUrl(item)).filter((item): item is string => Boolean(item)),
+    [src, fallbacks],
+  );
   const [index, setIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const prevSrc = useRef(src);

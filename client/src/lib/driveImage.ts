@@ -7,12 +7,20 @@ const DEFAULT_SIZE = 'w1200';
  * Returns null for empty, invalid, or unsupported input. Non-Drive URLs are also null;
  * use displayImageUrl when an existing image address should pass through unchanged.
  */
+export function getDriveFileId(input: string | null | undefined): string | null {
+  const url = parseDriveUrl(input);
+  if (!url) return null;
+  const fileId = extractFileId(url);
+  if (!fileId || !FILE_ID_RE.test(fileId)) return null;
+  return fileId;
+}
+
 export function getDriveImageUrl(input: string | null | undefined): string | null {
   const url = parseDriveUrl(input);
   if (!url) return null;
 
-  const fileId = extractFileId(url);
-  if (!fileId || !FILE_ID_RE.test(fileId)) return null;
+  const fileId = getDriveFileId(input);
+  if (!fileId) return null;
 
   const size = url.pathname === '/thumbnail' ? url.searchParams.get('sz')?.trim() || DEFAULT_SIZE : DEFAULT_SIZE;
   return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=${encodeURIComponent(size)}`;
@@ -26,12 +34,10 @@ export function displayImageUrl(input: string | null | undefined): string | null
   return getDriveImageUrl(trimmed);
 }
 
-/** Google's player for a shared Drive video. A plain video element cannot play these files. */
+/** Google's own player, used only if the normal video player cannot load the file. */
 export function getDriveVideoPlayback(input: string | null | undefined): string | null {
-  const url = parseDriveUrl(input);
-  if (!url) return null;
-  const fileId = extractFileId(url);
-  if (!fileId || !FILE_ID_RE.test(fileId)) return null;
+  const fileId = getDriveFileId(input);
+  if (!fileId) return null;
   return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
 }
 

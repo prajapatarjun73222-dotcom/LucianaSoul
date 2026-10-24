@@ -1,7 +1,7 @@
 const TOKEN_KEY = 'ls_admin_token';
 
 /** Empty in local dev (Vite proxies /api); set to the Render URL in production. */
-const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
+export const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 
 export const tokenStore = {
   get: () => localStorage.getItem(TOKEN_KEY),

@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { Readable } from 'node:stream';
+import type { ReadableStream } from 'node:stream/web';
 import { z } from 'zod';
 import { Types } from 'mongoose';
 import { Media, MEDIA_CATEGORIES, MEDIA_KINDS, MEDIA_SOURCES } from '../models/Media.js';
@@ -79,6 +81,50 @@ router.put(
       ids.map((id, index) => ({ updateOne: { filter: { _id: id }, update: { sortOrder: index } } })),
     );
     res.json({ ok: true });
+  }),
+);
+
+const DRIVE_FILE_ID = /^[a-zA-Z0-9_-]{10,}$/;
+
+/** Streams a saved Drive video from our own address so the page can use a normal player. */
+router.get(
+  '/drive/:fileId',
+  asyncHandler(async (req, res) => {
+    const fileId = req.params.fileId;
+    if (!DRIVE_FILE_ID.test(fileId)) return res.status(404).end();
+    const saved = await Media.exists({
+      url: { $regex: `(?:/d/|[?&]id=)${fileId}(?:[^A-Za-z0-9_-]|$)` },
+    });
+    if (!saved) return res.status(404).end();
+
+    const headers: Record<string, string> = { 'User-Agent': 'LucianaSoul' };
+    if (typeof req.headers.range === 'string') headers.Range = req.headers.range;
+    const upstream = await fetch(
+      `https://drive.usercontent.google.com/download?id=${encodeURIComponent(fileId)}&export=download`,
+      { headers, redirect: 'follow' },
+    );
+    const type = upstream.headers.get('content-type') ?? '';
+    if ((!upstream.ok && upstream.status !== 206) || !type.startsWith('video/') || !upstream.body) {
+      return res.status(502).end();
+    }
+
+    res.status(upstream.status);
+    res.setHeader('Content-Type', type);
+    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('Accept-Ranges', upstream.headers.get('accept-ranges') ?? 'bytes');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    const length = upstream.headers.get('content-length');
+    const range = upstream.headers.get('content-range');
+    if (length) res.setHeader('Content-Length', length);
+    if (range) res.setHeader('Content-Range', range);
+    const stream = Readable.fromWeb(upstream.body as ReadableStream<Uint8Array>);
+    stream.on('error', () => {
+      if (!res.headersSent) res.status(502).end();
+      else res.destroy();
+    });
+    res.on('close', () => stream.destroy());
+    stream.pipe(res);
   }),
 );
 

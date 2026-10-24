@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import type { Media } from '../types';
-import { displayImageUrl, getDriveVideoPlayback } from '../lib/driveImage';
+import { API_BASE } from '../lib/api';
+import { displayImageUrl, getDriveFileId, getDriveVideoPlayback } from '../lib/driveImage';
 import { useInView } from '../lib/useInView';
 import SmartImage from './SmartImage';
 import { InstagramIcon, PlayIcon } from './Icons';
@@ -30,9 +31,11 @@ export default function InstagramMedia({ media, ratio = '4/5', className = '', i
   const isVideo = media.type === 'video' || media.kind === 'instagram_reel' || media.kind === 'external_video';
   const alt = media.alt || media.title || 'LucianaSoul';
   const poster = media.thumbnailUrl || (media.kind === 'instagram_post' || media.kind === 'image' ? media.url : '');
-  const driveEmbed = isInstagram ? null : getDriveVideoPlayback(media.url);
+  const driveId = isInstagram ? null : getDriveFileId(media.url);
+  const driveFile = driveId ? `${API_BASE}/api/media/drive/${encodeURIComponent(driveId)}` : '';
+  const driveEmbed = driveId ? getDriveVideoPlayback(media.url) : null;
   const embedSrc = media.embedUrl || driveEmbed || '';
-  const fileSrc = driveEmbed ? '' : !isInstagram && !embedSrc && media.kind === 'video' ? media.url : '';
+  const fileSrc = driveFile || (!isInstagram && !embedSrc && media.kind === 'video' ? media.url : '');
   const canPlayHere = !isInstagram && Boolean(fileSrc || embedSrc);
   const revealed = interactive ? inView : activated;
   const showFile = Boolean(fileSrc) && !useEmbed && revealed;
@@ -84,17 +87,27 @@ export default function InstagramMedia({ media, ratio = '4/5', className = '', i
           onError={() => setUseEmbed(true)}
         />
       )}
-      {showEmbed && (
-        <iframe
-          src={embedSrc}
-          title={alt}
-          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-          allowFullScreen
-          className={isInstagram ? 'h-[620px] w-full border-0 bg-white' : 'absolute inset-0 z-10 h-full w-full border-0'}
-        />
-      )}
-      {showEmbed && driveEmbed && embedSrc === driveEmbed && (
-        <span className="absolute right-0 top-0 z-20 h-16 w-16 bg-black" aria-hidden />
+      {showEmbed && driveEmbed && embedSrc === driveEmbed ? (
+        <div className="absolute inset-0 z-10 overflow-hidden bg-black">
+          <iframe
+            src={embedSrc}
+            title={alt}
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            className="absolute left-0 w-full border-0"
+            style={{ top: '-3.25rem', height: 'calc(100% + 3.25rem)' }}
+          />
+        </div>
+      ) : (
+        showEmbed && (
+          <iframe
+            src={embedSrc}
+            title={alt}
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            className={isInstagram ? 'h-[620px] w-full border-0 bg-white' : 'absolute inset-0 z-10 h-full w-full border-0'}
+          />
+        )
       )}
       {!showFile && !showEmbed && (
         <>

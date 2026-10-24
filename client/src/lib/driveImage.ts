@@ -26,6 +26,15 @@ export function displayImageUrl(input: string | null | undefined): string | null
   return getDriveImageUrl(trimmed);
 }
 
+/** Google's player for a shared Drive video. A plain video element cannot play these files. */
+export function getDriveVideoPlayback(input: string | null | undefined): string | null {
+  const url = parseDriveUrl(input);
+  if (!url) return null;
+  const fileId = extractFileId(url);
+  if (!fileId || !FILE_ID_RE.test(fileId)) return null;
+  return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
+}
+
 function parseDriveUrl(input: string | null | undefined): URL | null {
   if (!input?.trim()) return null;
   let url: URL;

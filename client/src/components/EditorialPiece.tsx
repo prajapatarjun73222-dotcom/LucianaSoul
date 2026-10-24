@@ -22,32 +22,42 @@ interface Props {
   className?: string;
 }
 
+function isMotion(kind?: string, type?: string) {
+  return type === 'video' || kind === 'video' || kind === 'instagram_reel' || kind === 'external_video';
+}
+
 /** A collection piece presented like a magazine page: image first, quiet typographic caption. */
 export default function EditorialPiece({ product, ratio, index, sizes, className = '' }: Props) {
   const hero = heroMedia(product);
   const alt = secondaryMedia(product);
+  const motion = isMotion(hero?.kind, hero?.type);
+  const frame = (
+    <div className="relative overflow-hidden">
+      <MediaView media={hero} ratio={ratio} sizes={sizes} className="zoom-hover" fallback={alt} />
+      {alt && !motion && (
+        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-1000 group-hover:opacity-100">
+          <MediaView media={alt} ratio={ratio} sizes={sizes} className="h-full" />
+        </div>
+      )}
+    </div>
+  );
   return (
     <Reveal className={className}>
-      <Link to={`/collection/${product.slug}`} className="group block">
-        <div className="relative overflow-hidden">
-          <MediaView media={hero} ratio={ratio} sizes={sizes} className="zoom-hover" fallback={alt} />
-          {alt && (
-            <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-1000 group-hover:opacity-100">
-              <MediaView media={alt} ratio={ratio} sizes={sizes} className="h-full" />
+      <div className="group">
+        {motion ? frame : <Link to={`/collection/${product.slug}`} className="block">{frame}</Link>}
+        <Link to={`/collection/${product.slug}`} className="block">
+          <div className="mt-4 flex items-baseline justify-between gap-4">
+            <div>
+              {index !== undefined && <span className="label mr-3 text-taupe">{String(index + 1).padStart(2, '0')}</span>}
+              <h3 className="inline font-serif text-2xl uppercase tracking-wide text-ink">{displayName(product.name)}</h3>
             </div>
-          )}
-        </div>
-        <div className="mt-4 flex items-baseline justify-between gap-4">
-          <div>
-            {index !== undefined && <span className="label mr-3 text-taupe">{String(index + 1).padStart(2, '0')}</span>}
-            <h3 className="inline font-serif text-2xl uppercase tracking-wide text-ink">{displayName(product.name)}</h3>
+            <span className="label shrink-0 text-taupe">
+              {product.priceDisplay || AVAILABILITY_LABELS[product.availability]}
+            </span>
           </div>
-          <span className="label shrink-0 text-taupe">
-            {product.priceDisplay || AVAILABILITY_LABELS[product.availability]}
-          </span>
-        </div>
-        <p className="label mt-1 text-taupe/80">{PRODUCT_CATEGORY_LABELS[product.category] ?? product.category}</p>
-      </Link>
+          <p className="label mt-1 text-taupe/80">{PRODUCT_CATEGORY_LABELS[product.category] ?? product.category}</p>
+        </Link>
+      </div>
     </Reveal>
   );
 }
